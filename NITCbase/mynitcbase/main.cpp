@@ -149,12 +149,18 @@ int main(int argc, char *argv[])
     StaticBuffer buffer;
     OpenRelTable cache;
 
-    for (int i = 0; i <= 1; i++)
+    RecBuffer relCatBuffer(RELCAT_BLOCK);
+
+    HeadInfo relCatHeader;
+
+    relCatBuffer.getHeader(&relCatHeader);
+
+    for (int i = 0; i < 3; i++)
     {
-        RelCatEntry relCatBuffer;
-        RelCacheTable::getRelCatEntry(i, &relCatBuffer);
-        printf("Relation: %s\n", relCatBuffer.relName);
-        for (int j = 0; j < relCatBuffer.numAttrs; j++)
+        RelCatEntry relCatEntry;
+        RelCacheTable::getRelCatEntry(i, &relCatEntry);
+        printf("Relation: %s\n", relCatEntry.relName);
+        for (int j = 0; j < relCatEntry.numAttrs; j++)
         {
             AttrCatEntry attrCatBuffer;
             AttrCacheTable::getAttrCatEntry(i, j, &attrCatBuffer);
