@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
 
     relCatBuffer.getHeader(&relCatHeader);
 
-    for (int i = 0; i < 3; i++)
+    for (int i = 0; i < relCatHeader.numEntries; i++)
     {
         RelCatEntry relCatEntry;
         RelCacheTable::getRelCatEntry(i, &relCatEntry);
@@ -163,7 +163,12 @@ int main(int argc, char *argv[])
         for (int j = 0; j < relCatEntry.numAttrs; j++)
         {
             AttrCatEntry attrCatBuffer;
-            AttrCacheTable::getAttrCatEntry(i, j, &attrCatBuffer);
+            const int res = AttrCacheTable::getAttrCatEntry(i, j, &attrCatBuffer);
+            if (res != SUCCESS)
+            {
+                cout << "Not fetched\n"
+                     << res;
+            }
             const char *attrtype = attrCatBuffer.attrType == NUMBER ? "NUM" : "STR";
             printf("\t%s: %s\n", attrCatBuffer.attrName, attrtype);
         }

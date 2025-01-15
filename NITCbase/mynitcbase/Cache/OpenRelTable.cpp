@@ -33,18 +33,22 @@ OpenRelTable::OpenRelTable()
     AttrCacheEntry *head = nullptr;
     AttrCacheEntry *current = nullptr;
     int attrCount = 0;
+    int slotNum = 0;
+    int i = 0;
     for (int j = 0; j < RelCatHeader.numEntries; j++)
     {
-
+        HeadInfo attrCatHeader;
+        attrCatBuffer.getHeader(&attrCatHeader);
         int noOfAttributes = RelCacheTable::relCache[j]->relCatEntry.numAttrs;
 
-        for (int i = attrCount; i < noOfAttributes + attrCount; i++)
+        for (; i < noOfAttributes + attrCount; i++, slotNum++)
         {
-            attrCatBuffer.getRecord(attrCatRecord, i);
+
+            attrCatBuffer.getRecord(attrCatRecord, slotNum);
             AttrCacheEntry *attrCacheEntry = (AttrCacheEntry *)malloc(sizeof(AttrCacheEntry));
             AttrCacheTable::recordToAttrCatEntry(attrCatRecord, &(attrCacheEntry->attrCatEntry));
-            attrCacheEntry->recId.block = ATTRCAT_BLOCK;
-            attrCacheEntry->recId.slot = i;
+            attrCacheEntry->recId.block = ATTRCAT_BLOCK + int(i / 20);
+            attrCacheEntry->recId.slot = slotNum;
 
             attrCacheEntry->next = nullptr;
 
@@ -58,7 +62,14 @@ OpenRelTable::OpenRelTable()
             }
 
             current = attrCacheEntry;
+            if (slotNum + 1 == attrCatHeader.numSlots)
+            {
+                slotNum = -1;
+                attrCatBuffer = RecBuffer(attrCatHeader.rblock);
+                attrCatBuffer.getHeader(&attrCatHeader);
+            }
         }
+
         attrCount += noOfAttributes;
         current->next = nullptr;
 
