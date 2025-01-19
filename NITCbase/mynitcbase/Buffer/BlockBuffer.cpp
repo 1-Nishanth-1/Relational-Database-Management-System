@@ -106,3 +106,40 @@ int BlockBuffer::loadBlockAndGetBufferPtr(unsigned char **buffPtr)
 
     return SUCCESS;
 }
+
+int RecBuffer::getSlotMap(unsigned char *slotMap)
+{
+    unsigned char *bufferptr;
+
+    int ret = loadBlockAndGetBufferPtr(&bufferptr);
+    if (ret != SUCCESS)
+    {
+        return ret;
+    }
+
+    struct HeadInfo head;
+
+    getHeader(&head);
+
+    int slotCount = head.numSlots;
+
+    unsigned char *slotMapInBuffer = bufferptr + HEADER_SIZE;
+
+    memcpy(slotMap, slotMapInBuffer, slotCount);
+    return SUCCESS;
+}
+
+int compareAttrs(union Attribute attr1, union Attribute attr2, int attrtype)
+{
+    double diff;
+    if (attrtype == STRING)
+    {
+        diff = strcmp(attr1.sVal, attr2.sVal);
+    }
+    else
+    {
+        diff = attr1.nVal - attr2.nVal;
+    }
+    return diff > 0 ? 1 : diff == 0 ? 0
+                                    : -1;
+}

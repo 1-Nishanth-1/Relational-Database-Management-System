@@ -135,3 +135,19 @@ OpenRelTable::~OpenRelTable()
         AttrCacheTable::attrCache[i] = nullptr;
     }
 }
+
+int OpenRelTable::getRelId(char relName[ATTR_SIZE])
+{
+
+    if (!strcmp(relName, RELCAT_RELNAME))
+    {
+        return RELCAT_RELID;
+    }
+
+    if (!strcmp(relName, ATTRCAT_RELNAME))
+    {
+        return ATTRCAT_RELID;
+    }
+
+    return E_RELNOTOPEN;
+}
