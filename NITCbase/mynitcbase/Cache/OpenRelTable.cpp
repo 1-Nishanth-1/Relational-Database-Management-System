@@ -70,12 +70,14 @@ OpenRelTable::OpenRelTable()
             }
         }
 
+
         attrCount += noOfAttributes;
         current->next = nullptr;
 
         AttrCacheTable::attrCache[j] = head;
         head = nullptr;
         current = nullptr;
+        printf("%s fro relid %d\n", AttrCacheTable::attrCache[j]->attrCatEntry.attrName, j);
     }
 }
 
@@ -147,6 +149,10 @@ int OpenRelTable::getRelId(char relName[ATTR_SIZE])
     if (!strcmp(relName, ATTRCAT_RELNAME))
     {
         return ATTRCAT_RELID;
+    }
+     if (!strcmp(relName, "Students"))
+    {
+        return ATTRCAT_RELID+1;
     }
 
     return E_RELNOTOPEN;
