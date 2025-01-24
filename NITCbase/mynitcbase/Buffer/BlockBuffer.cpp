@@ -42,6 +42,11 @@ int RecBuffer::getRecord(union Attribute *rec, int slotNum)
         return ret;
     }
 
+    if (slotNum < 0 || slotNum > BLOCK_SIZE)
+    {
+        E_OUTOFBOUND;
+    }
+
     /* record at slotNum will be at offset HEADER_SIZE + slotMapSize + (recordSize * slotNum)
      - each record will have size attrCount * ATTR_SIZE
      - slotMap will be of size slotCount
@@ -64,9 +69,17 @@ int RecBuffer::setRecord(union Attribute *rec, int slotNum)
     int attrCount = head.numAttrs;
     int slotCount = head.numSlots;
 
-    unsigned char buffer[BLOCK_SIZE];
+    unsigned char *bufferPtr;
+    int ret = loadBlockAndGetBufferPtr(&bufferPtr);
+    if (ret != SUCCESS)
+    {
+        return ret;
+    }
 
-    Disk::readBlock(buffer, this->blockNum);
+    if (slotNum < 0 || slotNum > BLOCK_SIZE)
+    {
+        E_OUTOFBOUND;
+    }
 
     /* record at slotNum will be at offset HEADER_SIZE + slotMapSize + (recordSize * slotNum)
      - each record will have size attrCount * ATTR_SIZE
@@ -76,11 +89,11 @@ int RecBuffer::setRecord(union Attribute *rec, int slotNum)
 
     int offset = HEADER_SIZE + slotCount + (slotNum * recordSize);
 
-    unsigned char *slotPointer = buffer + offset;
+    unsigned char *slotPointer = bufferPtr + offset;
 
     memcpy(slotPointer, rec, recordSize);
 
-    Disk::writeBlock(buffer, this->blockNum);
+    StaticBuffer::setDirtyBit(this->blockNum);
 
     return SUCCESS;
 }
@@ -101,6 +114,11 @@ int BlockBuffer::loadBlockAndGetBufferPtr(unsigned char **buffPtr)
 
         Disk::readBlock(StaticBuffer::blocks[bufferNum], this->blockNum);
     }
+    for (int i = 0; i < BUFFER_CAPACITY - 1; i++)
+    {
+        StaticBuffer::metainfo[i].timeStamp++;
+    }
+    StaticBuffer::metainfo[bufferNum].timeStamp = 0;
 
     *buffPtr = StaticBuffer::blocks[bufferNum];
 
