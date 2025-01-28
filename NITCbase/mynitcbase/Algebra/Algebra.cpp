@@ -104,3 +104,53 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
     }
     return SUCCESS;
 }
+
+int Algebra::insert(char relName[ATTR_SIZE], int nAttrs, char record[][ATTR_SIZE])
+{
+    if (relName == RELCAT_RELNAME || relName == ATTRCAT_RELNAME)
+    {
+        E_NOTPERMITTED;
+    }
+
+    int relId = OpenRelTable::getRelId(relName);
+
+    if (relId == E_RELNOTOPEN)
+    {
+        return E_RELNOTOPEN;
+    }
+
+    RelCatEntry relCatBuffer;
+
+    RelCacheTable::getRelCatEntry(relId, &relCatBuffer);
+
+    if (relCatBuffer.numAttrs != nAttrs)
+    {
+        return E_NATTRMISMATCH;
+    }
+
+    union Attribute recordValues[nAttrs];
+
+    AttrCatEntry attrCatBuffer;
+
+    for (int i = 0; i < nAttrs; i++)
+    {
+        AttrCacheTable::getAttrCatEntry(relId, i, &attrCatBuffer);
+        int type = attrCatBuffer.attrType;
+        if (type == NUMBER)
+        {
+            if (isNumber(record[i]))
+            {
+                recordValues[i].nVal = atof(record[i]);
+            }
+            else
+            {
+                E_ATTRTYPEMISMATCH;
+            }
+        }
+        else if (type == STRING)
+        {
+            strcpy(recordValues[i].sVal, record[i]);
+        }
+    }
+    return BlockAccess::insert(relId, recordValues);
+}

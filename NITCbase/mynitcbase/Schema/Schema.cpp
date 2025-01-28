@@ -44,7 +44,7 @@ int Schema::renameRel(char oldRelName[ATTR_SIZE], char newRelName[ATTR_SIZE])
     {
         return E_RELOPEN;
     }
-    return SUCCESS;
+    return BlockAccess::renameRelation(oldRelName, newRelName);
 }
 
 int Schema::renameAttr(char *relName, char *oldAttrName, char *newAttrName)

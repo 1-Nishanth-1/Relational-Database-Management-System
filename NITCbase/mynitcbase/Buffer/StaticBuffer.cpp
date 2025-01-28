@@ -1,12 +1,21 @@
 #include "StaticBuffer.h"
+#include <iostream>
 
 unsigned char StaticBuffer::blocks[BUFFER_CAPACITY][BLOCK_SIZE];
 
 struct BufferMetaInfo StaticBuffer::metainfo[BUFFER_CAPACITY];
 
+unsigned char StaticBuffer::blockAllocMap[DISK_BLOCKS];
+
 StaticBuffer::StaticBuffer()
 {
-    for (int i = 0; i < BUFFER_CAPACITY - 1; i++)
+    for (int i = 0; i <= 3; i++)
+    {
+
+        Disk::readBlock(&blockAllocMap[i * 2048], i);
+    }
+
+    for (int i = 0; i < BUFFER_CAPACITY; i++)
     {
         metainfo[i].free = true;
         metainfo[i].dirty = false;
@@ -17,7 +26,11 @@ StaticBuffer::StaticBuffer()
 
 StaticBuffer::~StaticBuffer()
 {
-    for (int i = 0; i < BUFFER_CAPACITY - 1; i++)
+    for (int i = 0; i < 3; i++)
+    {
+        Disk::writeBlock(&blockAllocMap[i * 2048], i);
+    }
+    for (int i = 0; i < BUFFER_CAPACITY; i++)
     {
         if (metainfo[i].free == false && metainfo[i].dirty == true)
         {
@@ -28,18 +41,18 @@ StaticBuffer::~StaticBuffer()
 
 int StaticBuffer::getFreeBuffer(int blockNum)
 {
-    if (blockNum < 0 || blockNum > DISK_BLOCKS)
+    if (blockNum < 0 || blockNum >= DISK_BLOCKS)
     {
         return E_OUTOFBOUND;
     }
 
-    for (int i = 0; i < BLOCK_SIZE - 1; i++)
+    for (int i = 0; i < BUFFER_CAPACITY; i++)
     {
         metainfo[i].timeStamp++;
     }
 
     int bufferNum = -1;
-    for (int i = 0; i < BUFFER_CAPACITY - 1; i++)
+    for (int i = 0; i < BUFFER_CAPACITY; i++)
     {
         if (metainfo[i].free == true)
         {
@@ -51,7 +64,7 @@ int StaticBuffer::getFreeBuffer(int blockNum)
     {
         int index = -1;
         int maxTime = -1;
-        for (int i = 0; i < BLOCK_SIZE - 1; i++)
+        for (int i = 0; i < BLOCK_SIZE; i++)
         {
             if (metainfo[i].timeStamp > maxTime)
             {
@@ -79,7 +92,7 @@ int StaticBuffer::getBufferNum(int blockNum)
     {
         return E_OUTOFBOUND;
     }
-    for (int i = 0; i < BUFFER_CAPACITY - 1; i++)
+    for (int i = 0; i < BUFFER_CAPACITY; i++)
     {
         if (metainfo[i].blockNum == blockNum)
         {
