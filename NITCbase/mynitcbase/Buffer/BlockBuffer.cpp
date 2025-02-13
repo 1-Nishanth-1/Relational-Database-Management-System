@@ -162,9 +162,9 @@ int RecBuffer::getSlotMap(unsigned char *slotMap)
 
     int slotCount = head.numSlots;
 
-    unsigned char *slotMapInBuffer = bufferptr + HEADER_SIZE;
+    unsigned char *slotMapBuffer = bufferptr + HEADER_SIZE;
 
-    memcpy(slotMap, slotMapInBuffer, slotCount);
+    memcpy(slotMap, slotMapBuffer, slotCount);
     return SUCCESS;
 }
 
@@ -234,6 +234,32 @@ int BlockBuffer::getFreeBlock(int blockType)
     setBlockType(blockType);
 
     return this->blockNum;
+}
+
+int BlockBuffer::getBlockNum()
+{
+    return this->blockNum;
+}
+
+int RecBuffer::setSlotMap(unsigned char *slotMap)
+{
+    unsigned char *bufferptr;
+    int ret = loadBlockAndGetBufferPtr(&bufferptr);
+    if (ret != SUCCESS)
+    {
+        return ret;
+    }
+
+    struct HeadInfo head;
+    getHeader(&head);
+
+    int numSlots = head.numSlots;
+
+    unsigned char *slotMapBuffer = bufferptr + HEADER_SIZE;
+
+    memcpy(slotMapBuffer, slotMap, numSlots);
+
+    return StaticBuffer::setDirtyBit(this->blockNum);
 }
 
 int compareAttrs(union Attribute attr1, union Attribute attr2, int attrtype)

@@ -1,5 +1,6 @@
 #include "RelCacheTable.h"
-
+#include <stdio.h>
+#include <string.h>
 #include <cstring>
 
 RelCacheEntry *RelCacheTable::relCache[MAX_OPEN];
@@ -73,13 +74,12 @@ int RelCacheTable::setRelCatEntry(int relId, RelCatEntry *relCatBuffer)
     {
         return E_OUTOFBOUND;
     }
-
-    if (relCache[relId] = nullptr)
+    if (relCache[relId] == nullptr)
     {
         return E_RELNOTOPEN;
     }
-    relCache[relId]->relCatEntry = *relCatBuffer;
-    relCache[relId]->dirty = true;
+    memcpy(&(RelCacheTable::relCache[relId]->relCatEntry), relCatBuffer, sizeof(RelCatEntry));
+    RelCacheTable::relCache[relId]->dirty = true;
     return SUCCESS;
 }
 
