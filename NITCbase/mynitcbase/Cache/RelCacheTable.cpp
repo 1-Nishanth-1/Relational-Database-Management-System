@@ -79,7 +79,7 @@ int RelCacheTable::setRelCatEntry(int relId, RelCatEntry *relCatBuffer)
         return E_RELNOTOPEN;
     }
     memcpy(&(RelCacheTable::relCache[relId]->relCatEntry), relCatBuffer, sizeof(RelCatEntry));
-    RelCacheTable::relCache[relId]->dirty = true;
+    relCache[relId]->dirty = true;
     return SUCCESS;
 }
 

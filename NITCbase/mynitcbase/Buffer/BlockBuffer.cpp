@@ -276,3 +276,20 @@ int compareAttrs(union Attribute attr1, union Attribute attr2, int attrtype)
     return diff > 0 ? 1 : diff == 0 ? 0
                                     : -1;
 }
+
+void BlockBuffer::releaseBlock()
+{
+    if (this->blockNum == -1)
+    {
+        return;
+    }
+    int bufferNum = StaticBuffer::getBufferNum(this->blockNum);
+    if (bufferNum == E_BLOCKNOTINBUFFER)
+    {
+        return;
+    }
+    StaticBuffer::metainfo[bufferNum].free = true;
+    StaticBuffer::blockAllocMap[this->blockNum] = UNUSED_BLK;
+    this->blockNum = -1;
+    return;
+}
