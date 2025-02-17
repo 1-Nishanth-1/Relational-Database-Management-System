@@ -120,7 +120,7 @@ int Schema::createRel(char relName[], int nAttrs, char attr[][ATTR_SIZE], int ty
 
 int Schema::deleteRel(char *relName)
 {
-    if (relName == RELCAT_RELNAME || relName == ATTRCAT_RELNAME)
+    if (!strcmp(relName, RELCAT_RELNAME) || !strcmp(relName, ATTRCAT_RELNAME))
     {
         return E_NOTPERMITTED;
     }
