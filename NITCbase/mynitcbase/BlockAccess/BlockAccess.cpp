@@ -172,7 +172,7 @@ int BlockAccess::renameAttribute(char relName[ATTR_SIZE], char oldName[ATTR_SIZE
 
 int BlockAccess::insert(int relId, Attribute *record)
 {
-    std::cout << "BlockAccess::insert" << std::endl;
+
     RelCatEntry relCatBuffer;
     RelCacheTable::getRelCatEntry(relId, &relCatBuffer);
 
@@ -206,20 +206,18 @@ int BlockAccess::insert(int relId, Attribute *record)
         prevBlockNum = blockNum;
         blockNum = recHeader.rblock;
     }
-    std::cout << "BlockAccess::insert before new block" << recId.block << recId.slot << std::endl;
+
     if (recId.block == -1 && recId.slot == -1)
     {
-        std::cout << "BlockAccess::insert before new block" << std::endl;
+
         if (relId == RELCAT_RELID)
         {
             return E_MAXRELATIONS;
         }
 
-        std::cout << "BlockAccess::insert before get block" << std::endl;
         RecBuffer recBufferNew;
         int ret = recBufferNew.getBlockNum();
 
-        std::cout << "BlockAccess::insert after get block" << ret << std::endl;
         if (ret == E_DISKFULL)
         {
             return E_DISKFULL;
@@ -235,9 +233,9 @@ int BlockAccess::insert(int relId, Attribute *record)
         newHead.numEntries = 0;
         newHead.numSlots = numOfSlots;
         newHead.numAttrs = numOfAttributes;
-        std::cout << "BlockAccess::insert before set header" << std::endl;
+
         recBufferNew.setHeader(&newHead);
-        std::cout << "BlockAccess::insert after set header" << std::endl;
+
         unsigned char newSlotmap[numOfSlots];
         memset(newSlotmap, SLOT_UNOCCUPIED, numOfSlots);
         recBufferNew.setSlotMap(newSlotmap);
@@ -259,8 +257,6 @@ int BlockAccess::insert(int relId, Attribute *record)
         RelCacheTable::setRelCatEntry(relId, &relCatBuffer);
     }
 
-    std::cout << "BlockAccess::insert before newrecBuffer" << std::endl;
-
     RecBuffer newrecBuffer(recId.block);
     newrecBuffer.setRecord(record, recId.slot);
 
@@ -274,7 +270,7 @@ int BlockAccess::insert(int relId, Attribute *record)
     newrecBuffer.setHeader(&header);
     relCatBuffer.numRecs = relCatBuffer.numRecs + 1;
     RelCacheTable::setRelCatEntry(relId, &relCatBuffer);
-    std::cout << "BlockAccess::insert end" << std::endl;
+
     return SUCCESS;
 }
 

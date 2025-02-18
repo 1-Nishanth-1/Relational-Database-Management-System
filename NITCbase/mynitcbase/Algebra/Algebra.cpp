@@ -120,7 +120,7 @@ int Algebra::select(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], char attr
 
 int Algebra::insert(char relName[ATTR_SIZE], int nAttrs, char record[][ATTR_SIZE])
 {
-    if (relName == RELCAT_RELNAME || relName == ATTRCAT_RELNAME)
+    if (strcmp(relName, RELCAT_RELNAME) == 0 || strcmp(relName, ATTRCAT_RELNAME) == 0)
     {
         E_NOTPERMITTED;
     }
@@ -275,7 +275,7 @@ int Algebra::project(char srcRel[ATTR_SIZE], char targetRel[ATTR_SIZE], int tar_
             projRecord[i] = record[attr_offsets[i]];
         }
 
-        ret = BlockAccess::insert(targetRelId, record);
+        ret = BlockAccess::insert(targetRelId, projRecord);
         if (ret < 0)
         {
             OpenRelTable::closeRel(targetRelId);
