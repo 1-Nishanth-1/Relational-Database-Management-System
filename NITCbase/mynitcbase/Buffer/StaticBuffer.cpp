@@ -64,19 +64,19 @@ int StaticBuffer::getFreeBuffer(int blockNum)
     {
         int index = -1;
         int maxTime = -1;
-        for (int i = 0; i < BLOCK_SIZE; i++)
+        for (int i = 0; i < BUFFER_CAPACITY; i++)
         {
             if (metainfo[i].timeStamp > maxTime)
             {
                 maxTime = metainfo[i].timeStamp;
                 index = i;
             }
-            if (metainfo[index].dirty == true)
-            {
-                Disk::writeBlock(blocks[index], metainfo[index].blockNum);
-            }
-            bufferNum = index;
         }
+        if (metainfo[index].dirty == true)
+        {
+            Disk::writeBlock(blocks[index], metainfo[index].blockNum);
+        }
+        bufferNum = index;
     }
     metainfo[bufferNum].dirty = false;
     metainfo[bufferNum].timeStamp = 0;

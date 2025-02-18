@@ -1,0 +1,5 @@
+echo
+OPEN TABLE Toys
+echo
+insert into Toys values from Toys.csv
+echo Done
