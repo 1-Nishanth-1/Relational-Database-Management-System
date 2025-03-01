@@ -293,3 +293,100 @@ void BlockBuffer::releaseBlock()
     this->blockNum = -1;
     return;
 }
+
+IndBuffer::IndBuffer(char blockType) : BlockBuffer(blockType) {}
+
+IndBuffer::IndBuffer(int blockNum) : BlockBuffer(blockNum) {}
+
+IndInternal::IndInternal() : IndBuffer('I') {}
+
+IndInternal::IndInternal(int blockNum) : IndBuffer(blockNum) {}
+
+IndLeaf::IndLeaf() : IndBuffer('L') {}
+
+IndLeaf::IndLeaf(int blockNum) : IndBuffer(blockNum) {}
+
+int IndInternal::getEntry(void *ptr, int indexNum)
+{
+    if (indexNum < 0 || indexNum > MAX_KEYS_INTERNAL)
+    {
+        E_OUTOFBOUND;
+    }
+    unsigned char *bufferPtr;
+    int ret = loadBlockAndGetBufferPtr(&bufferPtr);
+    if (ret < 0)
+    {
+        return ret;
+    }
+    struct InternalEntry *internalEntry = (struct InternalEntry *)ptr;
+
+    unsigned char *entryPtr = bufferPtr + HEADER_SIZE + (indexNum * 20);
+
+    memcpy(&(internalEntry->lChild), entryPtr, sizeof(int32_t));
+    memcpy(&(internalEntry->attrVal), entryPtr + 4, sizeof(Attribute));
+    memcpy(&(internalEntry->rChild), entryPtr + 20, 4);
+    return SUCCESS;
+}
+
+int IndLeaf::getEntry(void *ptr, int indexNum)
+{
+    if (indexNum < 0 || indexNum > MAX_KEYS_LEAF)
+    {
+        E_OUTOFBOUND;
+    }
+    unsigned char *bufferPtr;
+    int ret = loadBlockAndGetBufferPtr(&bufferPtr);
+    if (ret < 0)
+    {
+        return ret;
+    }
+    struct LeafEntry *leafEntry = (struct LeafEntry *)ptr;
+
+    unsigned char *entryPtr = bufferPtr + HEADER_SIZE + (indexNum * LEAF_ENTRY_SIZE);
+    memcpy((struct Index *)ptr, entryPtr, LEAF_ENTRY_SIZE);
+
+    return SUCCESS;
+}
+
+int IndInternal::setEntry(void *ptr, int indexNum)
+{
+    if (indexNum < 0 || indexNum > MAX_KEYS_INTERNAL)
+    {
+        E_OUTOFBOUND;
+    }
+    unsigned char *bufferPtr;
+    int ret = loadBlockAndGetBufferPtr(&bufferPtr);
+    if (ret < 0)
+    {
+        return ret;
+    }
+    struct InternalEntry *internalEntry = (struct InternalEntry *)ptr;
+
+    unsigned char *entryPtr = bufferPtr + HEADER_SIZE + (indexNum * 20);
+
+    memcpy(entryPtr, &(internalEntry->lChild), sizeof(int32_t));
+    memcpy(entryPtr + 4, &(internalEntry->attrVal), sizeof(Attribute));
+    memcpy(entryPtr + 20, &(internalEntry->rChild), 4);
+
+    return StaticBuffer::setDirtyBit(this->blockNum);
+}
+
+int IndLeaf::setEntry(void *ptr, int indexNum)
+{
+    if (indexNum < 0 || indexNum > MAX_KEYS_LEAF)
+    {
+        E_OUTOFBOUND;
+    }
+    unsigned char *bufferPtr;
+    int ret = loadBlockAndGetBufferPtr(&bufferPtr);
+    if (ret < 0)
+    {
+        return ret;
+    }
+    struct LeafEntry *leafEntry = (struct LeafEntry *)ptr;
+
+    unsigned char *entryPtr = bufferPtr + HEADER_SIZE + (indexNum * LEAF_ENTRY_SIZE);
+    memcpy(entryPtr, (struct Index *)ptr, LEAF_ENTRY_SIZE);
+
+    return StaticBuffer::setDirtyBit(this->blockNum);
+}
