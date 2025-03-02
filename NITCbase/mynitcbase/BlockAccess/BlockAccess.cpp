@@ -176,7 +176,7 @@ int BlockAccess::insert(int relId, Attribute *record)
     RelCatEntry relCatBuffer;
     RelCacheTable::getRelCatEntry(relId, &relCatBuffer);
 
-    int blockNum = relCatBuffer.firstBlk;
+    int blockNum = relCatBuffer.lastBlk;
     RecId recId = {-1, -1};
 
     int numOfSlots = relCatBuffer.numSlotsPerBlk;
@@ -307,6 +307,7 @@ int BlockAccess::search(int relId, Attribute *record, char attrName[ATTR_SIZE], 
     else
     {
         recId = BPlusTree::bPlusSearch(relId, attrName, attrVal, op);
+        printf("recId.block: %d, recId.slot: %d\n", recId.block, recId.slot);
     }
 
     if (recId.block == -1 && recId.slot == -1)
@@ -314,7 +315,9 @@ int BlockAccess::search(int relId, Attribute *record, char attrName[ATTR_SIZE], 
         return E_NOTFOUND;
     }
     RecBuffer buffer(recId.block);
-    return buffer.getRecord(record, recId.slot);
+    ret = buffer.getRecord(record, recId.slot);
+    printf("record: %d\n", record[0].nVal);
+    return ret;
 }
 
 int BlockAccess::deleteRelation(char relName[ATTR_SIZE])

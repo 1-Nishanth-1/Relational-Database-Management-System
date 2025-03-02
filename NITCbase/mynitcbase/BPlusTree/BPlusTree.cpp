@@ -20,72 +20,62 @@ RecId BPlusTree::bPlusSearch(int relId, char attrName[ATTR_SIZE], Attribute attr
     else
     {
         block = searchIndex.block;
-        index = searchIndex.index;
+        index = searchIndex.index + 1;
 
         IndLeaf leaf(block);
-
         HeadInfo leafHead;
         leaf.getHeader(&leafHead);
-
         if (index >= leafHead.numEntries)
         {
             block = leafHead.rblock;
             index = 0;
-
             if (block == -1)
-            {
                 return RecId{-1, -1};
-            }
         }
     }
+
     while (StaticBuffer::getStaticBlockType(block) == IND_INTERNAL)
     {
         IndInternal internalBlk(block);
         HeadInfo intHead;
-
         internalBlk.getHeader(&intHead);
         InternalEntry intEntry;
 
         if (op == NE || op == LT || op == LE)
         {
-            internalBlk.getEntry(&intEntry, index);
+            internalBlk.getEntry(&intEntry, 0);
             block = intEntry.lChild;
-            index = 0;
         }
         else
         {
-            internalBlk.getEntry(&intEntry, index);
-            if (op == GT)
+            bool found = false;
+            int i = 0;
+            while (i < intHead.numEntries)
             {
-                if (compareAttrs(attrVal, intEntry.attrVal, attrCatEntry.attrType) < 0)
+                internalBlk.getEntry(&intEntry, i);
+                int cmpVal = compareAttrs(intEntry.attrVal, attrVal, attrCatEntry.attrType);
+                if ((op == EQ && cmpVal >= 0) || (op == GE && cmpVal >= 0) || (op == GT && cmpVal > 0))
                 {
-                    block = intEntry.lChild;
-                    // index = 0;
+                    found = true;
+                    break;
                 }
-                else
-                {
-                    block = intEntry.rChild;
-                    // index = 0;
-                }
+                i++;
             }
-            else if (op == GE || op == EQ)
+            if (found)
             {
-                if (compareAttrs(attrVal, intEntry.attrVal, attrCatEntry.attrType) <= 0)
-                {
-                    block = intEntry.lChild;
-                    // index = 0;
-                }
-                else
-                {
-                    block = intEntry.rChild;
-                    // index = 0;
-                }
+                block = intEntry.lChild;
+            }
+            else
+            {
+                internalBlk.getEntry(&intEntry, intHead.numEntries - 1);
+                block = intEntry.rChild;
             }
         }
+        index = 0;
     }
+
     while (block != -1)
     {
-
         IndLeaf leafBlk(block);
         HeadInfo leafHead;
         leafBlk.getHeader(&leafHead);
@@ -93,9 +83,9 @@ RecId BPlusTree::bPlusSearch(int relId, char attrName[ATTR_SIZE], Attribute attr
         while (index < leafHead.numEntries)
         {
             leafBlk.getEntry(&leafEntry, index);
-            int cmpVal = compareAttrs(attrVal, leafEntry.attrVal, attrCatEntry.attrType);
-            if (
-                (op == EQ && cmpVal == 0) ||
+            int cmpVal = compareAttrs(leafEntry.attrVal, attrVal, attrCatEntry.attrType);
+
+            if ((op == EQ && cmpVal == 0) ||
                 (op == LE && cmpVal <= 0) ||
                 (op == LT && cmpVal < 0) ||
                 (op == GT && cmpVal > 0) ||
@@ -104,14 +94,13 @@ RecId BPlusTree::bPlusSearch(int relId, char attrName[ATTR_SIZE], Attribute attr
             {
                 IndexId newSearchIndex = {block, index};
                 AttrCacheTable::setSearchIndex(relId, attrName, &newSearchIndex);
-                RecId recId = {leafEntry.block, leafEntry.slot};
-                return recId;
+                return RecId{leafEntry.block, leafEntry.slot};
             }
             else if ((op == EQ || op == LE || op == LT) && cmpVal > 0)
             {
                 return RecId{-1, -1};
             }
-            ++index;
+            index++;
         }
         if (op != NE)
         {
@@ -141,6 +130,8 @@ int BPlusTree::bPlusCreate(int relId, char attrName[ATTR_SIZE])
     }
     IndLeaf rootBlockBuf;
     int rootBlock = rootBlockBuf.getBlockNum();
+    attrCatEntry.rootBlock = rootBlock;
+    AttrCacheTable::setAttrCatEntry(relId, attrName, &attrCatEntry);
     if (rootBlock == E_DISKFULL)
     {
         return E_DISKFULL;
@@ -160,7 +151,7 @@ int BPlusTree::bPlusCreate(int relId, char attrName[ATTR_SIZE])
                 Attribute record[relCatEntry.numAttrs];
                 recBuffer.getRecord(record, i);
                 RecId recId = {block, i};
-                int retVal = bPlusInsert(relId, attrName, record, recId);
+                int retVal = bPlusInsert(relId, attrName, record[attrCatEntry.offset], recId);
                 if (retVal == E_DISKFULL)
                 {
                     return E_DISKFULL;
@@ -292,7 +283,7 @@ int BPlusTree::insertIntoLeaf(int relId, char attrName[ATTR_SIZE], int blockNum,
             {
                 leafBlock.getEntry(&indices[j + 1], j);
             }
-            inserted = i;
+            inserted = true;
             break;
         }
         indices[i] = temp;
@@ -496,7 +487,7 @@ int BPlusTree::splitInternal(int intBlockNum, InternalEntry internalEntries[])
 
     for (int i = 0; i < rightBlkHeader.numEntries; i++)
     {
-        rightBlk.setEntry(&internalEntries[i + (MAX_KEYS_INTERNAL + 1) / 2], i);
+        rightBlk.setEntry(&internalEntries[i + (MAX_KEYS_INTERNAL + 1) / 2 + 1], i);
     }
 
     InternalEntry temp;

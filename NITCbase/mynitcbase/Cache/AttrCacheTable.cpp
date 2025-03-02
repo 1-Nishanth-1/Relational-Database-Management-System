@@ -51,7 +51,7 @@ int AttrCacheTable::getAttrCatEntry(int relId, char attrName[ATTR_SIZE], AttrCat
     }
     for (AttrCacheEntry *entry = attrCache[relId]; entry != nullptr; entry = entry->next)
     {
-        if (!strcmp(attrName, entry->attrCatEntry.attrName))
+        if (strcmp(attrName, entry->attrCatEntry.attrName) == 0)
         {
             *attrCatBuffer = (entry->attrCatEntry);
             return SUCCESS;
@@ -73,7 +73,7 @@ int AttrCacheTable::getSearchIndex(int relId, char attrName[ATTR_SIZE], IndexId 
     }
     for (AttrCacheEntry *entry = attrCache[relId]; entry != nullptr; entry = entry->next)
     {
-        if (entry->attrCatEntry.attrName == attrName)
+        if (strcmp(entry->attrCatEntry.attrName, attrName) == 0)
         {
             searchIndex->block = entry->searchIndex.block;
             searchIndex->index = entry->searchIndex.index;
@@ -118,7 +118,7 @@ int AttrCacheTable::setSearchIndex(int relId, char attrName[ATTR_SIZE], IndexId 
     }
     for (AttrCacheEntry *entry = attrCache[relId]; entry != nullptr; entry = entry->next)
     {
-        if (entry->attrCatEntry.attrName == attrName)
+        if (strcmp(entry->attrCatEntry.attrName, attrName) == 0)
         {
             entry->searchIndex.block = searchIndex->block;
             entry->searchIndex.index = searchIndex->index;
@@ -175,7 +175,7 @@ int AttrCacheTable::setAttrCatEntry(int relId, char attrName[ATTR_SIZE], AttrCat
     }
     for (AttrCacheEntry *entry = attrCache[relId]; entry != nullptr; entry = entry->next)
     {
-        if (entry->attrCatEntry.attrName == attrName)
+        if (strcmp(entry->attrCatEntry.attrName, attrName) == 0)
         {
             memcpy(&(entry->attrCatEntry), attrCatBuff, sizeof(AttrCatEntry));
             entry->dirty = true;
