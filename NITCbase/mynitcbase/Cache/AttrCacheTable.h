@@ -5,29 +5,30 @@
 #include "../define/constants.h"
 #include "../define/id.h"
 
-typedef struct AttrCatEntry {
+typedef struct AttrCatEntry
+{
   char relName[ATTR_SIZE];
   char attrName[ATTR_SIZE];
   int attrType;
   bool primaryFlag;
   int rootBlock;
   int offset;
-
 } AttrCatEntry;
 
-typedef struct AttrCacheEntry {
+typedef struct AttrCacheEntry
+{
   AttrCatEntry attrCatEntry;
   bool dirty;
   RecId recId;
   IndexId searchIndex;
   struct AttrCacheEntry *next;
-
 } AttrCacheEntry;
 
-class AttrCacheTable {
+class AttrCacheTable
+{
   friend class OpenRelTable;
 
- public:
+public:
   // methods
   static int getAttrCatEntry(int relId, char attrName[ATTR_SIZE], AttrCatEntry *attrCatBuf);
   static int getAttrCatEntry(int relId, int attrOffset, AttrCatEntry *attrCatBuf);
@@ -39,8 +40,9 @@ class AttrCacheTable {
   static int setSearchIndex(int relId, int attrOffset, IndexId *searchIndex);
   static int resetSearchIndex(int relId, char attrName[ATTR_SIZE]);
   static int resetSearchIndex(int relId, int attrOffset);
+  static int getAttributeOffset(int relId, char attrName[ATTR_SIZE]);
 
- private:
+private:
   // field
   static AttrCacheEntry *attrCache[MAX_OPEN];
 
@@ -49,4 +51,4 @@ class AttrCacheTable {
   static void attrCatEntryToRecord(AttrCatEntry *attrCatEntry, union Attribute record[ATTRCAT_NO_ATTRS]);
 };
 
-#endif  // NITCBASE_ATTRCACHETABLE_H
+#endif // NITCBASE_ATTRCACHETABLE_H

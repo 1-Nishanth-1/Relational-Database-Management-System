@@ -1,5 +1,5 @@
 #include "BPlusTree.h"
-
+#include <iostream>
 #include <cstring>
 RecId BPlusTree::bPlusSearch(int relId, char attrName[ATTR_SIZE], Attribute attrVal, int op)
 {
@@ -203,6 +203,8 @@ int BPlusTree::bPlusDestroy(int rootBlockNum)
 
 int BPlusTree::bPlusInsert(int relId, char attrName[ATTR_SIZE], Attribute attrVal, RecId recId)
 {
+    printf("%d\n", relId);
+    printf("%d %d\n", recId.block, recId.slot);
     AttrCatEntry attrCatEntry;
     int ret = AttrCacheTable::getAttrCatEntry(relId, attrName, &attrCatEntry);
     if (ret < 0)
@@ -235,28 +237,37 @@ int BPlusTree::bPlusInsert(int relId, char attrName[ATTR_SIZE], Attribute attrVa
 int BPlusTree::findLeafToInsert(int rootBlock, Attribute attrVal, int attrType)
 {
     int blockNum = rootBlock;
+
     while (StaticBuffer::getStaticBlockType(blockNum) != IND_LEAF)
     {
         IndInternal internalBlock(blockNum);
-        HeadInfo head;
-        internalBlock.getHeader(&head);
-        bool flag = false;
-        for (int i = 0; i < head.numEntries; i++)
+
+        HeadInfo blockHeader;
+        internalBlock.getHeader(&blockHeader);
+
+        int index = 0;
+        while (index < blockHeader.numEntries)
         {
             InternalEntry entry;
-            internalBlock.getEntry(&entry, i);
+            internalBlock.getEntry(&entry, index);
             if (compareAttrs(attrVal, entry.attrVal, attrType) <= 0)
-            {
-                blockNum = entry.lChild;
-                flag = true;
                 break;
-            }
+
+            index++;
         }
-        if (!flag)
+
+        if (index == blockHeader.numEntries)
+        {
+
+            InternalEntry entry;
+            internalBlock.getEntry(&entry, blockHeader.numEntries - 1);
+            blockNum = entry.rChild;
+        }
+        else
         {
             InternalEntry entry;
-            internalBlock.getEntry(&entry, head.numEntries - 1);
-            blockNum = entry.rChild;
+            internalBlock.getEntry(&entry, index);
+            blockNum = entry.lChild;
         }
     }
     return blockNum;
@@ -276,7 +287,7 @@ int BPlusTree::insertIntoLeaf(int relId, char attrName[ATTR_SIZE], int blockNum,
     {
         Index temp;
         leafBlock.getEntry(&temp, i);
-        if (compareAttrs(indexEntry.attrVal, temp.attrVal, attrCatEntry.attrType) < 0)
+        if (compareAttrs(indexEntry.attrVal, temp.attrVal, attrCatEntry.attrType) <= 0)
         {
             indices[i] = indexEntry;
             for (int j = i; j < blockHeader.numEntries; j++)
@@ -352,6 +363,7 @@ int BPlusTree::splitLeaf(int leafBlockNum, Index indices[])
     rightBlk.getHeader(&rightBlkHeader);
     leftBlk.getHeader(&leftBlkHeader);
 
+    rightBlkHeader.blockType = leftBlkHeader.blockType;
     rightBlkHeader.numEntries = (MAX_KEYS_LEAF + 1) / 2;
     rightBlkHeader.pblock = leftBlkHeader.pblock;
     rightBlkHeader.rblock = leftBlkHeader.rblock;
@@ -478,6 +490,7 @@ int BPlusTree::splitInternal(int intBlockNum, InternalEntry internalEntries[])
     rightBlk.setHeader(&rightBlkHeader);
 
     leftBlkHeader.numEntries = (MAX_KEYS_INTERNAL) / 2;
+    leftBlkHeader.rblock = rightBlkNum;
     leftBlk.setHeader(&leftBlkHeader);
 
     for (int i = 0; i < (MAX_KEYS_INTERNAL) / 2; i++)

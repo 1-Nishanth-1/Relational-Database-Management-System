@@ -116,21 +116,21 @@ int Frontend::select_attrlist_from_join_where(char relname_source_one[ATTR_SIZE]
 											  int attr_count, char attr_list[][ATTR_SIZE])
 {
 	// Algebra::join + project
-	int ret = Algebra::join(relname_source_one, relname_source_two, TEMP, join_attr_one, join_attr_two);
+	int ret = Algebra::join(relname_source_one, relname_source_two, (char *)TEMP, join_attr_one, join_attr_two);
 	if (ret < 0)
 	{
 		return ret;
 	}
-	ret = OpenRelTable::openRel(TEMP);
+	ret = OpenRelTable::openRel((char *)TEMP);
 	if (ret < 0)
 	{
-		Schema::deleteRel(TEMP);
+		Schema::deleteRel((char *)TEMP);
 		return ret;
 	}
-	ret = Algebra::project(TEMP, relname_target, attr_count, attr_list);
+	ret = Algebra::project((char *)TEMP, relname_target, attr_count, attr_list);
 
-	OpenRelTable::closeRel(OpenRelTable::getRelId(TEMP));
-	Schema::deleteRel(TEMP);
+	OpenRelTable::closeRel(OpenRelTable::getRelId((char *)TEMP));
+	Schema::deleteRel((char *)TEMP);
 	if (ret < 0)
 	{
 

@@ -39,7 +39,7 @@ int BlockBuffer::getHeader(struct HeadInfo *head)
     {
         return ret;
     }
-
+    memcpy(&head->blockType, bufferPtr, 4);
     memcpy(&head->pblock, bufferPtr + 4, 4);
     memcpy(&head->lblock, bufferPtr + 8, 4);
     memcpy(&head->rblock, bufferPtr + 12, 4);
@@ -122,26 +122,27 @@ int RecBuffer::setRecord(union Attribute *rec, int slotNum)
 
 int BlockBuffer::loadBlockAndGetBufferPtr(unsigned char **buffPtr)
 {
-
     int bufferNum = StaticBuffer::getBufferNum(this->blockNum);
 
-    if (bufferNum == E_BLOCKNOTINBUFFER)
+    if (bufferNum != E_BLOCKNOTINBUFFER)
+    {
+        for (int i = 0; i < BUFFER_CAPACITY; i++)
+        {
+            if (StaticBuffer::metainfo[i].free == false)
+            {
+                StaticBuffer::metainfo[i].timeStamp++;
+            }
+        }
+        StaticBuffer::metainfo[bufferNum].timeStamp = 0;
+    }
+    else
     {
         bufferNum = StaticBuffer::getFreeBuffer(this->blockNum);
 
         if (bufferNum == E_OUTOFBOUND)
-        {
             return E_OUTOFBOUND;
-        }
-
         Disk::readBlock(StaticBuffer::blocks[bufferNum], this->blockNum);
     }
-    for (int i = 0; i < BUFFER_CAPACITY; i++)
-    {
-        StaticBuffer::metainfo[i].timeStamp++;
-    }
-    StaticBuffer::metainfo[bufferNum].timeStamp = 0;
-
     *buffPtr = StaticBuffer::blocks[bufferNum];
     return SUCCESS;
 }
@@ -178,12 +179,12 @@ int BlockBuffer::setHeader(struct HeadInfo *head)
     }
     struct HeadInfo *bufferHeader = (struct HeadInfo *)bufferptr;
     bufferHeader->blockType = head->blockType;
+    bufferHeader->pblock = head->pblock;
     bufferHeader->lblock = head->lblock;
+    bufferHeader->rblock = head->rblock;
+    bufferHeader->numEntries = head->numEntries;
     bufferHeader->numAttrs = head->numAttrs;
     bufferHeader->numSlots = head->numSlots;
-    bufferHeader->pblock = head->pblock;
-    bufferHeader->rblock = head->rblock;
-
     return StaticBuffer::setDirtyBit(this->blockNum);
 }
 
