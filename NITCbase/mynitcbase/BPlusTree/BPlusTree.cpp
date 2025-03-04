@@ -363,7 +363,6 @@ int BPlusTree::splitLeaf(int leafBlockNum, Index indices[])
     rightBlk.getHeader(&rightBlkHeader);
     leftBlk.getHeader(&leftBlkHeader);
 
-    rightBlkHeader.blockType = leftBlkHeader.blockType;
     rightBlkHeader.numEntries = (MAX_KEYS_LEAF + 1) / 2;
     rightBlkHeader.pblock = leftBlkHeader.pblock;
     rightBlkHeader.rblock = leftBlkHeader.rblock;
@@ -490,7 +489,6 @@ int BPlusTree::splitInternal(int intBlockNum, InternalEntry internalEntries[])
     rightBlk.setHeader(&rightBlkHeader);
 
     leftBlkHeader.numEntries = (MAX_KEYS_INTERNAL) / 2;
-    leftBlkHeader.rblock = rightBlkNum;
     leftBlk.setHeader(&leftBlkHeader);
 
     for (int i = 0; i < (MAX_KEYS_INTERNAL) / 2; i++)
