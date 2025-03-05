@@ -464,65 +464,68 @@ int BPlusTree::insertIntoInternal(int relId, char attrName[ATTR_SIZE], int intBl
     }
     return SUCCESS;
 }
-
 int BPlusTree::splitInternal(int intBlockNum, InternalEntry internalEntries[])
 {
-    IndInternal rightBlock;
-    IndInternal leftBlock(intBlockNum);
+    IndInternal rightBlk;
+    IndInternal leftBlk(intBlockNum);
 
-    int rightBlockNum = rightBlock.getBlockNum();
-    int leftBlockNum = leftBlock.getBlockNum();
+    int rightBlkNum = rightBlk.getBlockNum();
+    int leftBlkNum = intBlockNum;
 
-    if (rightBlockNum == E_DISKFULL)
+    if (rightBlkNum == E_DISKFULL)
     {
         return E_DISKFULL;
     }
 
-    HeadInfo leftBlockHeader, rightBlockHeader;
+    HeadInfo leftBlkHeader, rightBlkHeader;
+    leftBlk.getHeader(&leftBlkHeader);
+    rightBlk.getHeader(&rightBlkHeader);
 
-    rightBlock.getHeader(&rightBlockHeader);
-    leftBlock.getHeader(&leftBlockHeader);
+    leftBlkHeader.numEntries = (MAX_KEYS_INTERNAL) / 2;
+    rightBlkHeader.numEntries = MAX_KEYS_INTERNAL / 2;
 
-    rightBlockHeader.numEntries = (MAX_KEYS_INTERNAL) / 2;
-    rightBlockHeader.pblock = leftBlockHeader.pblock;
-    rightBlock.setHeader(&rightBlockHeader);
+    rightBlkHeader.pblock = leftBlkHeader.pblock;
+    rightBlkHeader.lblock = leftBlkNum;
+    rightBlkHeader.rblock = leftBlkHeader.rblock;
 
-    leftBlockHeader.numEntries = (MAX_KEYS_INTERNAL) / 2;
-    leftBlockHeader.rblock = rightBlockNum;
-    leftBlock.setHeader(&leftBlockHeader);
+    leftBlk.setHeader(&leftBlkHeader);
+    rightBlk.setHeader(&rightBlkHeader);
 
-    for (int i = 0; i < MIDDLE_INDEX_INTERNAL; i++)
+    for (int i = 0; i < leftBlkHeader.numEntries; i++)
     {
-        leftBlock.setEntry(&internalEntries[i], i);
-        rightBlock.setEntry(&internalEntries[i + MIDDLE_INDEX_INTERNAL + 1], i);
+        leftBlk.setEntry(&internalEntries[i], i);
     }
 
-    int type = StaticBuffer::getStaticBlockType(internalEntries[0].lChild);
-
-    BlockBuffer blockBuffer(internalEntries[MIDDLE_INDEX_INTERNAL + 1].lChild);
-
-    HeadInfo blockHeader;
-    blockBuffer.getHeader(&blockHeader);
-
-    blockHeader.pblock = rightBlockNum;
-    blockBuffer.setHeader(&blockHeader);
-
-    for (int i = 0; i < MIDDLE_INDEX_INTERNAL; i++)
+    for (int i = 0; i < rightBlkHeader.numEntries; i++)
     {
-        BlockBuffer blockBuffer(internalEntries[i + MIDDLE_INDEX_INTERNAL + 1].rChild);
-
-        blockBuffer.getHeader(&blockHeader);
-        blockHeader.pblock = rightBlockNum;
-        blockBuffer.setHeader(&blockHeader);
+        int srcIndex = i + (MAX_KEYS_INTERNAL + 1) / 2 + 1;
+        rightBlk.setEntry(&internalEntries[srcIndex], i);
     }
 
-    return rightBlockNum;
+    InternalEntry temp;
+    for (int i = 0; i < rightBlkHeader.numEntries; i++)
+    {
+        rightBlk.getEntry(&temp, i);
+        BlockBuffer lChildBuf(temp.lChild);
+        HeadInfo childHead;
+        lChildBuf.getHeader(&childHead);
+        childHead.pblock = rightBlkNum;
+        lChildBuf.setHeader(&childHead);
+    }
+    rightBlk.getEntry(&temp, rightBlkHeader.numEntries - 1);
+    BlockBuffer rChildBuf(temp.rChild);
+    HeadInfo childHead;
+    rChildBuf.getHeader(&childHead);
+    childHead.pblock = rightBlkNum;
+    rChildBuf.setHeader(&childHead);
+
+    return rightBlkNum;
 }
 
-int BPlusTree::createNewRoot(int relId, char attrName[ATTR_SIZE], Attribute attrVal, int lChild, int rChild)
+int BPlusTree::createNewRoot(int relId, char attrNmae[ATTR_SIZE], Attribute attrVal, int lChild, int rChild)
 {
     AttrCatEntry attrCatEntry;
-    AttrCacheTable::getAttrCatEntry(relId, attrName, &attrCatEntry);
+    AttrCacheTable::getAttrCatEntry(relId, attrNmae, &attrCatEntry);
     IndInternal newRootBlock;
     int newRootBlockNum = newRootBlock.getBlockNum();
     if (newRootBlockNum == E_DISKFULL)
@@ -551,7 +554,7 @@ int BPlusTree::createNewRoot(int relId, char attrName[ATTR_SIZE], Attribute attr
     rChildBuffer.setHeader(&head);
 
     attrCatEntry.rootBlock = newRootBlockNum;
-    AttrCacheTable::setAttrCatEntry(relId, attrName, &attrCatEntry);
+    AttrCacheTable::setAttrCatEntry(relId, attrNmae, &attrCatEntry);
 
     return SUCCESS;
 }

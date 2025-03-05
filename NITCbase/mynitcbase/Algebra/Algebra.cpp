@@ -363,26 +363,19 @@ int Algebra::join(char srcRelation1[ATTR_SIZE], char srcRelation2[ATTR_SIZE], ch
         strcpy(targetRelAttrNames[i], attrCatBuffer.attrName);
         targetRelAttrTypes[i] = attrCatBuffer.attrType;
     }
+    int targetIndex = numOfAttributes1;
     for (int i = 0; i < numOfAttributes2; i++)
     {
         AttrCatEntry attrCatBuffer;
         AttrCacheTable::getAttrCatEntry(relIdsrc2, i, &attrCatBuffer);
-        bool inserted = false;
+
         if (strcmp(attrCatBuffer.attrName, attribute2) == 0)
         {
-            inserted = true;
             continue;
         }
-        if (inserted != 0)
-        {
-            strcpy(targetRelAttrNames[numOfAttributes1 + i - 1], attrCatBuffer.attrName);
-            targetRelAttrTypes[numOfAttributes1 + i - 1] = attrCatBuffer.attrType;
-        }
-        else
-        {
-            strcpy(targetRelAttrNames[numOfAttributes1 + i], attrCatBuffer.attrName);
-            targetRelAttrTypes[numOfAttributes1 + i] = attrCatBuffer.attrType;
-        }
+        strcpy(targetRelAttrNames[targetIndex], attrCatBuffer.attrName);
+        targetRelAttrTypes[targetIndex] = attrCatBuffer.attrType;
+        targetIndex++;
     }
     int ret = Schema::createRel(targetRelation, numOfAttributesInTarget, targetRelAttrNames, targetRelAttrTypes);
     if (ret < 0)
@@ -414,14 +407,15 @@ int Algebra::join(char srcRelation1[ATTR_SIZE], char srcRelation2[ATTR_SIZE], ch
             {
                 targetRecord[i] = record1[i];
             }
-            for (int i = 0, flag = 0; i < numOfAttributes2; i++)
+            int targetPos = numOfAttributes1;
+            for (int i = 0; i < numOfAttributes2; i++)
             {
                 if (i == attrCatEntry2.offset)
                 {
-                    flag = 1;
                     continue;
                 }
-                targetRecord[i + numOfAttributes1 - flag] = record2[i];
+                targetRecord[targetPos] = record2[i];
+                targetPos++;
             }
             if (BlockAccess::insert(OpenRelTable::getRelId(targetRelation), targetRecord) == E_DISKFULL)
             {

@@ -316,7 +316,6 @@ int BlockAccess::search(int relId, Attribute *record, char attrName[ATTR_SIZE], 
     }
     RecBuffer buffer(recId.block);
     ret = buffer.getRecord(record, recId.slot);
-    printf("record: %d\n", record[0].nVal);
     return ret;
 }
 
