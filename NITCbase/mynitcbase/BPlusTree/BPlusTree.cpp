@@ -522,10 +522,10 @@ int BPlusTree::splitInternal(int intBlockNum, InternalEntry internalEntries[])
     return rightBlkNum;
 }
 
-int BPlusTree::createNewRoot(int relId, char attrNmae[ATTR_SIZE], Attribute attrVal, int lChild, int rChild)
+int BPlusTree::createNewRoot(int relId, char attrName[ATTR_SIZE], Attribute attrVal, int lChild, int rChild)
 {
     AttrCatEntry attrCatEntry;
-    AttrCacheTable::getAttrCatEntry(relId, attrNmae, &attrCatEntry);
+    AttrCacheTable::getAttrCatEntry(relId, attrName, &attrCatEntry);
     IndInternal newRootBlock;
     int newRootBlockNum = newRootBlock.getBlockNum();
     if (newRootBlockNum == E_DISKFULL)
@@ -536,6 +536,7 @@ int BPlusTree::createNewRoot(int relId, char attrNmae[ATTR_SIZE], Attribute attr
     HeadInfo head;
     newRootBlock.getHeader(&head);
     head.numEntries = 1;
+    newRootBlock.setHeader(&head);
 
     InternalEntry entry;
     entry.lChild = lChild;
@@ -554,7 +555,7 @@ int BPlusTree::createNewRoot(int relId, char attrNmae[ATTR_SIZE], Attribute attr
     rChildBuffer.setHeader(&head);
 
     attrCatEntry.rootBlock = newRootBlockNum;
-    AttrCacheTable::setAttrCatEntry(relId, attrNmae, &attrCatEntry);
+    AttrCacheTable::setAttrCatEntry(relId, attrName, &attrCatEntry);
 
     return SUCCESS;
 }
