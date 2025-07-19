@@ -341,8 +341,6 @@ int IndLeaf::getEntry(void *ptr, int indexNum)
     {
         return ret;
     }
-    struct LeafEntry *leafEntry = (struct LeafEntry *)ptr;
-
     unsigned char *entryPtr = bufferPtr + HEADER_SIZE + (indexNum * LEAF_ENTRY_SIZE);
     memcpy((struct Index *)ptr, entryPtr, LEAF_ENTRY_SIZE);
 
