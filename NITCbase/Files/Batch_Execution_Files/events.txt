@@ -1,0 +1,5 @@
+DROP TABLE Events
+CREATE TABLE Events(id NUM, title STR)
+OPEN TABLE Events
+INSERT INTO Events VALUES FROM events.csv
+CREATE INDEX ON Events.id
