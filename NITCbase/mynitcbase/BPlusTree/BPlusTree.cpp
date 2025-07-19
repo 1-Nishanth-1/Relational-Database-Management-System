@@ -53,7 +53,8 @@ RecId BPlusTree::bPlusSearch(int relId, char attrName[ATTR_SIZE], Attribute attr
             while (i < intHead.numEntries)
             {
                 internalBlk.getEntry(&intEntry, i);
-                int cmpVal = compareAttrs(intEntry.attrVal, attrVal, attrCatEntry.attrType);
+                int cmpVal = compareAttrs(
+                    .attrVal, attrVal, attrCatEntry.attrType);
                 if ((op == EQ && cmpVal >= 0) || (op == GE && cmpVal >= 0) || (op == GT && cmpVal > 0))
                 {
                     found = true;
